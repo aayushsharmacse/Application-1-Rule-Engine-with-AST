@@ -3,13 +3,14 @@ import mongoose from "mongoose";
 const nodeSchema=new mongoose.Schema({
     nodeType:{
         type:String,
-        enum:["INTERNAL","LEAF"]
+        enum:["INTERNAL","LEAF"],
+        required:true
     },
-    ParentRuleCondition:{
+    parentRuleCondition:{
         type:String,
         enum:['>','<','=']
     },
-    ParentRuleOperation:{
+    parentRuleOperation:{
         type: String,
         enum: ["OR", "AND"]
     },
