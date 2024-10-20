@@ -1,49 +1,77 @@
 
 console.log("inside js")
+function areParenthesesBalanced(expression) {
+    let balance = 0;
 
-const createAST=async (modifiedInput)=>{
-    modifiedInput=modifiedInput.trim();
-    if(modifiedInput[0]!=='('){
-        const n=modifiedInput.length;
-        let nodeType="LEAF";
-        let valueLeft;
-        let valueRight;
-        let parentRuleCondition;
-        for(let i=0;i<n;i++){
-            if(modifiedInput[i]==='<' || modifiedInput[i]==='>' || modifiedInput[i]==='='){
-                parentRuleCondition=modifiedInput[i];
-                valueLeft=modifiedInput.slice(0,i).trim();
-                valueRight=modifiedInput.slice(i+1).trim();
-                console.log(nodeType,parentRuleCondition,valueLeft,valueRight);
-                console.log("going to request")
-                try{
-                const {data : ASTNode}=await axios.post(
-                    "https://bug-free-memory-pxp7qrvvg9xh7wrr-3000.app.github.dev/api/v1/createnode",
-                    {
-                        nodeType,parentRuleCondition,valueLeft,valueRight
-                    }
-                )
-                console.log(ASTNode);
-                if(ASTNode.success===true){
-                console.log(ASTNode.result._id);
-                return ASTNode.result._id;
+    for (const char of expression) {
+        if (char === '(') {
+            balance++;
+        } else if (char === ')') {
+            balance--;
+        }
+        if (balance < 0) {
+            return false;
+        }
+    }
+    return balance === 0;
+}
+const createASTLeaf=async(modifiedInput)=>{
+    const n=modifiedInput.length;
+    let nodeType="LEAF";
+    let valueLeft;
+    let valueRight;
+    let parentRuleCondition;
+    for(let i=0;i<n;i++){
+        if(modifiedInput[i]==='<' || modifiedInput[i]==='>' || modifiedInput[i]==='='){
+            parentRuleCondition=modifiedInput[i];
+            valueLeft=modifiedInput.slice(0,i).trim();
+            valueRight=modifiedInput.slice(i+1).trim();
+            console.log(nodeType,parentRuleCondition,valueLeft,valueRight);
+            console.log("going to request")
+            try{
+            const {data : ASTNode}=await axios.post(
+                "https://bug-free-memory-pxp7qrvvg9xh7wrr-3000.app.github.dev/api/v1/createnode",
+                {
+                    nodeType,parentRuleCondition,valueLeft,valueRight
                 }
-                else{
-                    console.log(`${modifiedInput} has seen an err- `,ASTNode.result.message)
-                }
-                }
-                catch(e){
-                    alert(e);
-                    return;
-                }
+            )
+            console.log(ASTNode);
+            if(ASTNode.success===true){
+            console.log(ASTNode.result._id);
+            return ASTNode.result._id;
+            }
+            else{
+                console.log(`${modifiedInput} has seen an err- `,ASTNode.result.message)
+            }
+            }
+            catch(e){
+                alert(e);
+                return;
             }
         }
     }
-    modifiedInput=modifiedInput.slice(1, -1);
+    alert("Wrong input received");
+    throw new Error("Wrong input received");
+    return;
+}
+const createAST=async (modifiedInput)=>{
+    modifiedInput=modifiedInput.trim();
+    if(modifiedInput[0]==='(' && modifiedInput[modifiedInput.length-1]===')'){
+        const isBalanced=areParenthesesBalanced(modifiedInput.slice(1, -1))
+        if(isBalanced){
+            modifiedInput=modifiedInput.slice(1, -1);
+            return createAST(modifiedInput);
+        }
+    }
     const n=modifiedInput.length;
     let bracketCnt=0;
     for(let i=0;i<n;i++){
-        if(bracketCnt===0 && modifiedInput[i]!=='(' && modifiedInput[i]!==' ' && (modifiedInput[i]==='A' || modifiedInput[i]==='O') ){
+        if(bracketCnt===0 &&
+             (
+                ( (i<(n-1)) && modifiedInput[i]+modifiedInput[i+1]==="OR")
+                || ( (i<(n-2)) && modifiedInput[i]+modifiedInput[i+1]+modifiedInput[i+2]==="AND")
+            ) 
+            ){
             let left;
             let right;
             let parentRuleOperation;
@@ -63,10 +91,6 @@ const createAST=async (modifiedInput)=>{
                 parentRuleOperation="OR";
                 left=await createAST(modifiedInput.slice(0,i));
                 right=await createAST(modifiedInput.slice(i+2));
-            }
-            else{
-                console.log("Wrong rule input");
-                return;
             }
             try{
             const {data:ASTNode}=await axios.post(
@@ -96,12 +120,18 @@ const createAST=async (modifiedInput)=>{
             bracketCnt--;
         }
     }
+    return createASTLeaf(modifiedInput);
 }
+
 
 const create_rule=async(rule_string)=>{
     rule_string=rule_string.trim();
-    const modifiedInput="("+rule_string+")"
-    const ASTNode=createAST(modifiedInput)
+    if(areParenthesesBalanced(rule_string).isBalanced){
+        alert("Invalid input");
+        return;
+    }
+    // const rule_string="("+rule_string+")"
+    const ASTNode=createAST(rule_string)
     return ASTNode;
 }
 const createRuleElement=document.getElementsByClassName("create")[0];
@@ -159,10 +189,12 @@ const evaluateData=async(modifiedInput)=>{
             const { parentRuleOperation, left, right }=response.result.node;
             console.log()
             if(parentRuleOperation==="AND"){
-                return evaluateData({_id:left,data}) && evaluateData({_id:right,data});
+                return ( (await evaluateData({_id:left,data}))
+                 &&  (await evaluateData({_id:right,data})) );
             }
             else{
-                return evaluateData({_id:left,data}) || evaluateData({_id:right,data});
+                return ( (await evaluateData({_id:left,data})) 
+                || (await evaluateData({_id:right,data})) );
             }
         }
         else{
@@ -176,7 +208,7 @@ const evaluateData=async(modifiedInput)=>{
             }
             else if(parentRuleCondition==='='){
                 if(valueLeft==="department"){
-                    return (data[valueLeft]===valueRight);
+                    return (data[valueLeft]===valueRight.slice(1,-1));
                 }
                 else{
                     return (data[valueLeft]===Number(valueRight));
@@ -198,7 +230,7 @@ const evaluateData=async(modifiedInput)=>{
         return;
     }
 }
-
+// The result is
 evaluateRuleElement.addEventListener("click",
     async(e)=>{
         console.log("evaluate rule event fired")
