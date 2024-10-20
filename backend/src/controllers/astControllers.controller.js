@@ -34,9 +34,23 @@ const addAST=async(req,res)=>{
 const deletenodes=async(req,res)=>{
     try {
         await Node.deleteMany({});
-        res.status(200).json({success:true,result:{message: "Successfully deleted"}});
+        return res.status(200).json({success:true,result:{message: "Successfully deleted"}});
     } catch (error) {
-        res.status(500).json({ success: false, result:{message:e.message} });
+        return res.status(500).json({ success: false, result:{message:e.message} });
     }
 }
-export {addAST,deletenodes};
+
+const evaluateData=async(req,res)=>{
+    try {
+        const _id=req.params;
+        const node=await Node.findById(_id);
+        if(!node){
+        return res.status(200).json({ success: false, result: { message: "Node does not exists."} });
+        }
+        // console.log("node=",node);
+        return res.status(200).json({ success: true, result:{node} });
+    } catch (error) {
+        return res.status(400).json({ success: false, result:{message:error.message} });
+    }
+}
+export {addAST,deletenodes,evaluateData};

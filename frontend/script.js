@@ -1,3 +1,4 @@
+
 console.log("inside js")
 
 const createAST=async (modifiedInput)=>{
@@ -131,8 +132,6 @@ combineRulesElement.addEventListener("click",
         modifiedInput=input.slice(1, -1);
         const lst=modifiedInput.split(",");
         const n=lst.length;
-        console.log(lst);
-        alert("k")
         const combinedRules = lst.reduce((accumulator, currentRule) => {
             if(currentRule[0]==='"'){
                 currentRule=currentRule.slice(1, -1);
@@ -142,22 +141,101 @@ combineRulesElement.addEventListener("click",
             }
             return currentRule;
         }, '');
-        console.log(combinedRules);
-        alert("h");
         const ASTNode=await create_rule(combinedRules);
         alert(`Your AST reference node is ${ASTNode}`);
     }
         return;
 }
 )
+
+const evaluateData=async(modifiedInput)=>{
+    const {_id,data}=modifiedInput;
+    try{
+        console.log("entered")
+    const {data:response}=await axios.get(`https://bug-free-memory-pxp7qrvvg9xh7wrr-3000.app.github.dev/api/v1/evaluatedata/${_id}`);
+    if(response.success===true){
+        console.log(response.result.node);
+        if(response.result.node.nodeType==="INTERNAL"){
+            const { parentRuleOperation, left, right }=response.result.node;
+            console.log()
+            if(parentRuleOperation==="AND"){
+                return evaluateData({_id:left,data}) && evaluateData({_id:right,data});
+            }
+            else{
+                return evaluateData({_id:left,data}) || evaluateData({_id:right,data});
+            }
+        }
+        else{
+            const { parentRuleCondition, valueLeft, valueRight}=response.result.node;
+            console.log("checking for ",valueLeft, parentRuleCondition, valueRight);
+            if(parentRuleCondition==='<'){
+            return (data[valueLeft]<Number(valueRight));
+            }
+            else if(parentRuleCondition==='>'){
+                return (data[valueLeft]>Number(valueRight));
+            }
+            else if(parentRuleCondition==='='){
+                if(valueLeft==="department"){
+                    return (data[valueLeft]===valueRight);
+                }
+                else{
+                    return (data[valueLeft]===Number(valueRight));
+                }
+            }
+            return true;
+        }
+        return;
+    }
+    else{
+        console.log(response.result.message)
+        alert(`Has seen an err-${response.result.message}`);
+        return;
+    }
+    return;
+    }
+    catch(e){
+        alert(e);
+        return;
+    }
+}
+
 evaluateRuleElement.addEventListener("click",
-    (e)=>{console.log("evaluate rule event fired")}
+    async(e)=>{
+        console.log("evaluate rule event fired")
+        const input = prompt('Enter JSON rule AST and data e.g. {"_id":"60d21b4667d0d8992e610c85", "data":{"age":35,"department":"Sales","salary":60000,"experience":3}}');
+        let modifiedinput,result;
+        if(input){
+            try{
+            modifiedinput=JSON.parse(input);
+            if(modifiedinput._id.length!=24){
+                alert("ref must given 24-character hexadecimal strings");
+                return;
+            }
+            }catch(e){
+                alert("Wrong input provided");
+                return;
+            }
+            try{
+            result=await evaluateData(modifiedinput);
+            // if(result!=""){
+                alert(`The result is:${result}`)
+            // }
+            }catch(e){
+                alert("Err evaluating data with the given ref");
+                return;
+            }
+            return result;
+        }
+    }
 )
 
 clearDbElement.addEventListener("click",async()=>{
     try {
         const response = await axios.delete('https://bug-free-memory-pxp7qrvvg9xh7wrr-3000.app.github.dev/api/v1/deletenodes');
-        alert(response.data.success && "Successfully cleared the db"); // Success message
+        // alert(response.data.success); // Success message
+        if(response.data.success){
+            alert("Successfully cleared the db")
+        }
     } catch (error) {
         console.error('Error deleting nodes:', error.message);
     }
