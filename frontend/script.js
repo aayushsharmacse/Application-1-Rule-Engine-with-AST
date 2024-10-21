@@ -30,7 +30,7 @@ const createASTLeaf=async(modifiedInput)=>{
             console.log("going to request")
             try{
             const {data : ASTNode}=await axios.post(
-                "https://bug-free-memory-pxp7qrvvg9xh7wrr-3000.app.github.dev/api/v1/createnode",
+                "https://rule-engine-with-ast-iobg.onrender.com/api/v1/createnode",
                 {
                     nodeType,parentRuleCondition,valueLeft,valueRight
                 }
@@ -94,7 +94,7 @@ const createAST=async (modifiedInput)=>{
             }
             try{
             const {data:ASTNode}=await axios.post(
-                "https://bug-free-memory-pxp7qrvvg9xh7wrr-3000.app.github.dev/api/v1/createnode",
+                "https://rule-engine-with-ast-iobg.onrender.com/api/v1/createnode",
                 {
                     nodeType,parentRuleOperation,left,right
                 }
@@ -182,7 +182,7 @@ const evaluateData=async(modifiedInput)=>{
     const {_id,data}=modifiedInput;
     try{
         console.log("entered")
-    const {data:response}=await axios.get(`https://bug-free-memory-pxp7qrvvg9xh7wrr-3000.app.github.dev/api/v1/evaluatedata/${_id}`);
+    const {data:response}=await axios.get(`https://rule-engine-with-ast-iobg.onrender.com/api/v1/evaluatedata/${_id}`);
     if(response.success===true){
         console.log(response.result.node);
         if(response.result.node.nodeType==="INTERNAL"){
@@ -263,7 +263,7 @@ evaluateRuleElement.addEventListener("click",
 
 clearDbElement.addEventListener("click",async()=>{
     try {
-        const response = await axios.delete('https://bug-free-memory-pxp7qrvvg9xh7wrr-3000.app.github.dev/api/v1/deletenodes');
+        const response = await axios.delete('https://rule-engine-with-ast-iobg.onrender.com/api/v1/deletenodes');
         // alert(response.data.success); // Success message
         if(response.data.success){
             alert("Successfully cleared the db")
