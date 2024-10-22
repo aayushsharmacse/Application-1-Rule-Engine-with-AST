@@ -2,7 +2,7 @@
 Objective: Develop a simple 3-tier rule engine application(Simple UI, API and Backend, Data) to determine user eligibility based on attributes like age, department, income, spend etc.The system can use Abstract Syntax Tree (AST) to represent conditional rules and allow for dynamic creation,combination, and modification of these rules.
 ![image](https://github.com/user-attachments/assets/0b284639-47b4-4404-8a4f-76786a97bc5d)
 
-# [ Please continuously monitor console for progress and the final result will also be declared by alert wait for it]
+## [ Please continuously monitor console for progress and the final result will also be declared by alert, wait for it]
 
 Sample Rules:
 ● rule1 = ((age > 30 AND department = 'Sales') OR (age < 25 AND department = 'Marketing')) AND (salary > 50000 OR experience > 5)
